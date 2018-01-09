@@ -115,6 +115,17 @@ def test():
 
         r.finalize()
 
+        # checks afetr close
+        test_getl(r)
+        test_getj(r)
+        test_set_payload(r)
+        test_movel(r)
+        test_movej(r)
+        test_movels(r)
+        test_translate_tool(r)
+        test_async_mode(r)
+        test_freedrive(r)
+
     except urrobot.URxException:
         print("### Failed. URx exception")
     except Exception as e:
