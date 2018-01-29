@@ -18,21 +18,18 @@ class URRobotController():
     # Exceptions
     URxException = urx.urrobot.RobotException
 
-    # Private constant value
-    _DEFAULT_ACC = 0.4
-    _DEFAULT_VEL = 0.5
-
     # Private member
     __robot = None
     __sync_mode = False
+    _accel = 0.4
+    _velocity = 0.5
 
-    def __init__(self, ip="192.168.1.101", realtime=False):
+    def __init__(self, ip="192.168.1.101"):
         logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s',
                             level=logging.INFO)
 
-        logging.info("Create URRobotController IP: " +
-                     ip + " RTPort: " + str(realtime))
-        self.__robot = urx.Robot(ip, use_rt=realtime)
+        logging.info("Create URRobotController IP: " + ip)
+        self.__robot = urx.Robot(ip, use_rt=True)
         self.__robot.set_tcp((0, 0, 0, 0, 0, 0))
         self.__robot.set_payload(0, (0, 0, 0))
 
@@ -45,10 +42,38 @@ class URRobotController():
     def __exit__(self, exc_type, exc_value, traceback):
         self.finalize()
 
-    def _get_acc_vel(self, a=None, v=None):
-        acc = a or self._DEFAULT_ACC
-        vel = v or self._DEFAULT_VEL
-        return acc, vel
+    def get_acc_vel(self):
+        """Set accel and velocity for move.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            a: Target acceleration.
+            v: Target velocity.
+        """
+        return self._accel, self._velocity
+
+    def set_acc_vel(self, a=None, v=None):
+        """Get accel and velocity for move.
+
+        Note:
+            None.
+
+        Args:
+            a: Target acceleration.
+            v: Target velocity.
+
+        Returns:
+            None.
+        """
+        if a:
+            self._accel = a
+        if v:
+            self._velocity = v
 
     def finalize(self):
         """Finalize URRobotController instance.
@@ -158,7 +183,8 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            ac, vl = self._get_acc_vel(a, v)
+            self.set_acc_vel(a, v)
+            ac, vl = self.get_acc_vel()
             self.__robot.movel(pos, acc=ac, vel=vl, wait=self.__sync_mode)
 
     def movej(self, joints, a=None, v=None):
@@ -175,7 +201,8 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            ac, vl = self._get_acc_vel(a, v)
+            self.set_acc_vel(a, v)
+            ac, vl = self.get_acc_vel()
             self.__robot.movej(joints, acc=ac, vel=vl, wait=self.__sync_mode)
 
     def movels(self, poslist, a=None, v=None):
@@ -193,7 +220,8 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            ac, vl = self._get_acc_vel(a, v)
+            self.set_acc_vel(a, v)
+            ac, vl = self.get_acc_vel()
             self.__robot.movels(poslist, acc=ac, vel=vl, wait=self.__sync_mode)
 
     def translate_tool(self, vec, a=None, v=None):
@@ -211,7 +239,8 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            ac, vl = self._get_acc_vel(a, v)
+            self.set_acc_vel(a, v)
+            ac, vl = self.get_acc_vel()
             self.__robot.translate_tool(
                 vec, acc=ac, vel=vl, wait=self.__sync_mode)
 
@@ -248,6 +277,23 @@ class URRobotController():
             return self.__robot.getj()
         else:
             return (0, 0, 0, 0, 0, 0)
+
+    def get_force(self):
+        """Get TCP force.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            force: value of force
+        """
+        if self.__robot:
+            return self.__robot.get_force()
+        else:
+            return 0
 
     def start_freedrive(self, time=60):
         """Start freedrive mode.

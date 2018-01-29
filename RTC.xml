@@ -24,34 +24,14 @@
         <rtc:Configuration xsi:type="rtcExt:configuration_ext" rtcExt:variableName="" rtc:unit="" rtc:defaultValue="192.168.1.101" rtc:type="string" rtc:name="ip_address">
             <rtcExt:Properties rtcExt:value="text" rtcExt:name="__widget__"/>
         </rtc:Configuration>
-        <rtc:Configuration xsi:type="rtcExt:configuration_ext" rtcExt:variableName="" rtc:unit="" rtc:defaultValue="0" rtc:type="short" rtc:name="use_realtime_port">
-            <rtc:Constraint>
-                <rtc:ConstraintUnitType>
-                    <rtc:Or>
-                        <rtc:Constraint>
-                            <rtc:ConstraintUnitType>
-                                <rtc:propertyIsEqualTo rtc:matchCase="false">
-                                    <rtc:Literal>0</rtc:Literal>
-                                </rtc:propertyIsEqualTo>
-                            </rtc:ConstraintUnitType>
-                        </rtc:Constraint>
-                        <rtc:Constraint>
-                            <rtc:ConstraintUnitType>
-                                <rtc:propertyIsEqualTo rtc:matchCase="false">
-                                    <rtc:Literal>1</rtc:Literal>
-                                </rtc:propertyIsEqualTo>
-                            </rtc:ConstraintUnitType>
-                        </rtc:Constraint>
-                    </rtc:Or>
-                </rtc:ConstraintUnitType>
-            </rtc:Constraint>
-            <rtcExt:Properties rtcExt:value="radio" rtcExt:name="__widget__"/>
-        </rtc:Configuration>
     </rtc:ConfigurationSet>
+    <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="LEFT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedOctet" rtc:name="mode" rtc:portType="DataInPort"/>
     <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="LEFT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedFloatSeq" rtc:name="in_joint" rtc:portType="DataInPort"/>
     <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="LEFT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedPose3D" rtc:name="in_pose" rtc:portType="DataInPort"/>
     <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="RIGHT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedFloatSeq" rtc:name="out_joint" rtc:portType="DataOutPort"/>
     <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="RIGHT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedPose3D" rtc:name="out_pose" rtc:portType="DataOutPort"/>
+    <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="RIGHT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedBoolean" rtc:name="is_moving" rtc:portType="DataOutPort"/>
+    <rtc:DataPorts xsi:type="rtcExt:dataport_ext" rtcExt:position="RIGHT" rtcExt:variableName="" rtc:unit="" rtc:subscriptionType="" rtc:dataflowType="" rtc:interfaceType="" rtc:idlFile="" rtc:type="RTC::TimedFloatSeq" rtc:name="force" rtc:portType="DataOutPort"/>
     <rtc:ServicePorts xsi:type="rtcExt:serviceport_ext" rtcExt:position="LEFT" rtc:name="middle">
         <rtc:ServiceInterface xsi:type="rtcExt:serviceinterface_ext" rtcExt:variableName="" rtc:path="/usr/include/openrtm-1.1/rtm/idl/" rtc:type="JARA_ARM::ManipulatorCommonInterface_Middle" rtc:idlFile="/usr/include/openrtm-1.1/rtm/ext/ManipulatorCommonInterface_Middle.idl" rtc:instanceName="" rtc:direction="Provided" rtc:name="middle"/>
     </rtc:ServicePorts>
