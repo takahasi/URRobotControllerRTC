@@ -2,8 +2,10 @@
 """Universal Robot (URx) controller RTC.
 """
 
-import urx
+import sys
 import logging
+import urx
+from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
 
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
@@ -20,6 +22,7 @@ class URRobotController():
 
     # Private member
     __robot = None
+    __gripper = None
     __sync_mode = False
     _accel = 0.4
     _velocity = 0.5
@@ -29,9 +32,28 @@ class URRobotController():
                             level=logging.INFO)
 
         logging.info("Create URRobotController IP: " + ip)
-        self.__robot = urx.Robot(ip, use_rt=True)
-        self.__robot.set_tcp((0, 0, 0, 0, 0, 0))
-        self.__robot.set_payload(0, (0, 0, 0))
+
+        try:
+            self.__robot = urx.Robot(ip, use_rt=True)
+            self.__robot.set_tcp((0, 0, 0, 0, 0, 0))
+            self.__robot.set_payload(0, (0, 0, 0))
+        except self.URxException:
+            logging.error("URx exception was ooccured in init robot")
+            self.__robot = None
+            return
+        except Exception as e:
+            logging.error("exception: " + format(str(e)) + " in init robot")
+            self.__robot = None
+            return
+
+        try:
+            self.__gripper = Robotiq_Two_Finger_Gripper(self.__robot)
+        except self.URxException:
+            logging.error("URx exception was ooccured in init gripper")
+            self.__gripper = None
+        except Exception as e:
+            logging.error("exception: " + format(str(e)) + " in init gripper")
+            self.__gripper = None
 
     def __del__(self):
         self.finalize()
@@ -41,6 +63,42 @@ class URRobotController():
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.finalize()
+
+    def is_robot_available(self):
+        """Get robot instance is available or not.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Available.
+            False: NOT available.
+        """
+        if self.__robot:
+            return True
+        else:
+            return False
+
+    def is_gripper_available(self):
+        """Get gripper instance is available or not.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Available.
+            False: NOT available.
+        """
+        if self.__gripper:
+            return True
+        else:
+            return False
 
     def get_acc_vel(self):
         """Set accel and velocity for move.
@@ -90,6 +148,9 @@ class URRobotController():
         if self.__robot:
             self.__robot.close()
             self.__robot = None
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def set_payload(self, weight, vector=(0, 0, 0)):
         """Set payload in kg and cog.
@@ -107,6 +168,9 @@ class URRobotController():
         if self.__robot:
             # set payload in kg & cog
             self.__robot.set_payload(weight, vector)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def is_moving(self):
         """Get status of runnning program.
@@ -122,8 +186,11 @@ class URRobotController():
             False: Program is NOT running.
         """
         if self.__robot:
-            return self.__robot.is_running() and self.__robot.is_program_running()
+            r = self.__robot
+            return r.is_running() and r.is_program_running()
         else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
             return False
 
     def set_sync_mode(self):
@@ -186,6 +253,9 @@ class URRobotController():
             self.set_acc_vel(a, v)
             ac, vl = self.get_acc_vel()
             self.__robot.movel(pos, acc=ac, vel=vl, wait=self.__sync_mode)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def movej(self, joints, a=None, v=None):
         """Move the robot by joint movement.
@@ -204,6 +274,9 @@ class URRobotController():
             self.set_acc_vel(a, v)
             ac, vl = self.get_acc_vel()
             self.__robot.movej(joints, acc=ac, vel=vl, wait=self.__sync_mode)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def movels(self, poslist, a=None, v=None):
         """Sequential move the robot in a linear path.
@@ -223,6 +296,9 @@ class URRobotController():
             self.set_acc_vel(a, v)
             ac, vl = self.get_acc_vel()
             self.__robot.movels(poslist, acc=ac, vel=vl, wait=self.__sync_mode)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def translate_tool(self, vec, a=None, v=None):
         """Move tool in base coordinate, keeping orientation.
@@ -243,6 +319,9 @@ class URRobotController():
             ac, vl = self.get_acc_vel()
             self.__robot.translate_tool(
                 vec, acc=ac, vel=vl, wait=self.__sync_mode)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def getl(self):
         """Get TCP position.
@@ -259,6 +338,8 @@ class URRobotController():
         if self.__robot:
             return self.__robot.getl()
         else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
             return (0, 0, 0, 0, 0, 0)
 
     def getj(self):
@@ -276,6 +357,8 @@ class URRobotController():
         if self.__robot:
             return self.__robot.getj()
         else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
             return (0, 0, 0, 0, 0, 0)
 
     def get_force(self):
@@ -293,6 +376,8 @@ class URRobotController():
         if self.__robot:
             return self.__robot.get_force()
         else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
             return 0
 
     def start_freedrive(self, time=60):
@@ -309,6 +394,9 @@ class URRobotController():
         """
         if self.__robot:
             self.__robot.set_freedrive(True, timeout=time)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
     def end_freedrive(self):
         """End freedrive mode.
@@ -324,6 +412,61 @@ class URRobotController():
         """
         if self.__robot:
             self.__robot.set_freedrive(None)
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
+
+    def open_gripper(self):
+        """Open gripper.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+        """
+        if self.__robot and self.__gripper:
+            try:
+                self.__gripper.open_gripper()
+                self.__robot.send_program(self.__gripper.ret_program_to_run)
+            except self.URxException:
+                logging.error("URx exception was ooccured in " +
+                              sys._getframe().f_code.co_name)
+            except Exception as e:
+                logging.error("except: " + format(str(e)) +
+                              " in " + sys._getframe().f_code.co_name)
+        else:
+            logging.error("robot or gripper is not initialized in " +
+                          sys._getframe().f_code.co_name)
+
+    def close_gripper(self):
+        """Close gripper.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+        """
+        if self.__robot and self.__gripper:
+            try:
+                self.__gripper.close_gripper()
+                self.__robot.send_program(self.__gripper.ret_program_to_run)
+            except self.URxException:
+                logging.error("URx exception was ooccured in " +
+                              sys._getframe().f_code.co_name)
+            except Exception as e:
+                logging.error("except: " + format(str(e)) +
+                              " in " + sys._getframe().f_code.co_name)
+        else:
+            logging.error("robot or gripper is not initialized in " +
+                          sys._getframe().f_code.co_name)
 
 
 if __name__ == '__main__':

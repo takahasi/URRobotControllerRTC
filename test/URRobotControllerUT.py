@@ -8,6 +8,7 @@ sys.path.append("..")
 
 from URRobotController import URRobotController as urrobot
 
+
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
 __license__ = "LGPLv3"
@@ -28,6 +29,11 @@ def test_getl(r):
 def test_getj(r):
     print("### call getj")
     print(r.getj())
+
+
+def test_get_force(r):
+    print("### call get_force")
+    print(r.get_force())
 
 
 def test_set_payload(r):
@@ -88,6 +94,15 @@ def test_freedrive(r):
     r.end_freedrive()
 
 
+def test_gripper(r):
+    print("### open_gripper()")
+    r.open_gripper()
+    time.sleep(5)
+    print("### close_gripper_()")
+    r.close_gripper()
+    time.sleep(5)
+
+
 def test_reallocate_object(r):
     r.finalize()
     return urrobot()
@@ -102,6 +117,7 @@ def test():
 
         test_getl(r)
         test_getj(r)
+        test_get_force(r)
         test_set_payload(r)
         test_movel(r)
         test_movej(r)
@@ -112,12 +128,14 @@ def test():
         test_translate_tool(r)
         test_async_mode(r)
         test_freedrive(r)
+        test_gripper(r)
 
         r.finalize()
 
         # checks afetr close
         test_getl(r)
         test_getj(r)
+        test_get_force(r)
         test_set_payload(r)
         test_movel(r)
         test_movej(r)
@@ -125,6 +143,7 @@ def test():
         test_translate_tool(r)
         test_async_mode(r)
         test_freedrive(r)
+        test_gripper(r)
 
     except urrobot.URxException:
         print("### Failed. URx exception")

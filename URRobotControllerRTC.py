@@ -73,23 +73,35 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         self._in_jointIn = OpenRTM_aist.InPort("in_joint", self._d_in_joint)
 
         self._d_in_pose = RTC.TimedPose3D(RTC.Time(0, 0),
-                                          RTC.Pose3D(RTC.Point3D(0, 0, 0),
-                                                     RTC.Orientation3D(0, 0, 0))
+                                          RTC.Pose3D(RTC.Point3D(0,
+                                                                 0,
+                                                                 0),
+                                                     RTC.Orientation3D(0,
+                                                                       0,
+                                                                       0))
                                           )
         self._in_poseIn = OpenRTM_aist.InPort("in_pose", self._d_in_pose)
+
+        self._d_grip = RTC.TimedOctet(RTC.Time(0, 0), 0)
+        self._gripIn = OpenRTM_aist.InPort("grip", self._d_grip)
 
         self._d_out_joint = RTC.TimedFloatSeq(RTC.Time(0, 0), [])
         self._out_jointOut = OpenRTM_aist.OutPort(
             "out_joint", self._d_out_joint)
 
         self._d_out_pose = RTC.TimedPose3D(RTC.Time(0, 0),
-                                           RTC.Pose3D(RTC.Point3D(0, 0, 0),
-                                                      RTC.Orientation3D(0, 0, 0))
+                                           RTC.Pose3D(RTC.Point3D(0,
+                                                                  0,
+                                                                  0),
+                                                      RTC.Orientation3D(0,
+                                                                        0,
+                                                                        0))
                                            )
         self._out_poseOut = OpenRTM_aist.OutPort("out_pose", self._d_out_pose)
 
         self._d_is_moving = RTC.TimedBoolean(RTC.Time(0, 0), False)
-        self._is_movingOut = OpenRTM_aist.OutPort("is_moving", self._d_is_moving)
+        self._is_movingOut = OpenRTM_aist.OutPort("is_moving",
+                                                  self._d_is_moving)
 
         self._d_force = RTC.TimedFloatSeq(RTC.Time(0, 0), [])
         self._forceOut = OpenRTM_aist.OutPort("force", self._d_force)
@@ -111,7 +123,8 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         # </rtc-template>
 
         self._controller = None
-        self._log = OpenRTM_aist.Manager.instance().getLogbuf("URRobotController")
+        instance = OpenRTM_aist.Manager.instance()
+        self._log = instance.getLogbuf("URRobotController")
 
     ##
     #
@@ -128,6 +141,7 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         self.addInPort("mode", self._modeIn)
         self.addInPort("in_joint", self._in_jointIn)
         self.addInPort("in_pose", self._in_poseIn)
+        self.addInPort("grip", self._gripIn)
 
         # Set OutPort buffers
         self.addOutPort("out_joint", self._out_jointOut)
@@ -137,9 +151,11 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
 
         # Set service provider to Ports
         self._middlePort.registerProvider(
-            "middle", "JARA_ARM::ManipulatorCommonInterface_Middle", self._middle)
+            "middle", "JARA_ARM::ManipulatorCommonInterface_Middle",
+            self._middle)
         self._commonPort.registerProvider(
-            "common", "JARA_ARM::ManipulatorCommonInterface_Common", self._common)
+            "common", "JARA_ARM::ManipulatorCommonInterface_Common",
+            self._common)
 
         # Set service consumers to Ports
 
@@ -201,14 +217,14 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
     #
     def onActivated(self, ec_id):
 
-        try:
-            self._controller = urrobot(ip=self._ip_address[0])
-        except urrobot.URxException:
-            self._log.RTC_ERROR("URx exception was ooccured")
+        self._controller = urrobot(ip=self._ip_address[0])
+        if not self._controller.is_robot_available():
+            self._log.RTC_ERROR("URx robot is not available")
+            self._controller = None
             return RTC.RTC_ERROR
-        except Exception as e:
-            self._log.RTC_ERROR("exception: " + format(str(e)))
-            return RTC.RTC_ERROR
+
+        if not self._controller.is_rgripper_available():
+            self._log.RTC_WARN("URx gripper is not available")
 
         return RTC.RTC_OK
 
@@ -246,64 +262,28 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
             return RTC.RTC_ERROR
 
         # update mode
-        if self._modeIn.isNew():
-            mode = self._modeIn.read().data
-            self._log.RTC_INFO("mode: " + str(mode))
-            if mode == 10:
-                self._log.RTC_INFO("start freedrive mode")
-                self._controller.start_freedrive(time=120)
-            elif mode == 1:
-                self._log.RTC_INFO("start slow mode")
-                self._controller.end_freedrive()
-                self._controller.set_acc_vel(a=0.3, v=0.3)
-            else:
-                self._log.RTC_INFO("start normal mode")
-                self._controller.end_freedrive()
-                self._controller.set_acc_vel(a=0.6, v=0.6)
+        self._update_mode()
 
         # move by pose
-        if self._in_poseIn.isNew():
-            pose = self._in_poseIn.read().data
-            self._log.RTC_INFO("in_pose: " + str(pose))
-            px = pose.position.x
-            py = pose.position.y
-            pz = pose.position.z
-            rp = pose.orientation.p
-            rr = pose.orientation.r
-            ry = pose.orientation.y
-            self._controller.movel((px, py, pz, rp, rr, ry))
+        self._move_by_pose()
 
         # move by joints
-        if self._in_jointIn.isNew():
-            joints = self._in_jointIn.read().data
-            self._log.RTC_INFO("in_joint: " + str(joints))
-            if len(joints) == 6:
-                self._controller.movej(joints)
+        self._move_by_joints()
+
+        # control gripper
+        self._control_gripper()
 
         # output joints information
-        joints = self._controller.getj()
-        self._log.RTC_DEBUG("out_joint: " + str(joints))
-        self._d_out_joint.data = joints
-        self._out_jointOut.write()
+        self._output_joints()
 
         # output pose information
-        pose = self._controller.getl()
-        self._log.RTC_DEBUG("out_pose: " + str(pose))
-        self._d_out_pose.data = RTC.Pose3D(RTC.Point3D(pose[0], pose[1], pose[2]),
-                                           RTC.Orientation3D(pose[3], pose[4], pose[5]))
-        self._out_poseOut.write()
+        self._output_pose()
 
         # output moving information
-        moving = self._controller.is_moving()
-        self._log.RTC_DEBUG("is_moving: " + str(moving))
-        self._d_is_moving.data = moving
-        self._is_movingOut.write()
+        self. output_moving()
 
         # output force information
-        force = self._controller.get_force()
-        self._log.RTC_DEBUG("force: " + str(force))
-        self._d_force.data = [force]
-        self._forceOut.write()
+        self. output_force()
 
         return RTC.RTC_OK
 
@@ -377,6 +357,87 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
     # def onRateChanged(self, ec_id):
     #
     #    return RTC.RTC_OK
+
+    def _update_mode(self):
+        # update mode
+        if self._modeIn.isNew():
+            mode = self._modeIn.read().data
+            self._log.RTC_INFO("mode: " + str(mode))
+            if mode == 10:
+                self._log.RTC_INFO("start freedrive mode")
+                self._controller.start_freedrive(time=120)
+            elif mode == 1:
+                self._log.RTC_INFO("start slow mode")
+                self._controller.end_freedrive()
+                self._controller.set_acc_vel(a=0.3, v=0.3)
+            else:
+                self._log.RTC_INFO("start normal mode")
+                self._controller.end_freedrive()
+                self._controller.set_acc_vel(a=0.6, v=0.6)
+
+    def _move_by_pose(self):
+        # move by pose
+        if self._in_poseIn.isNew():
+            pose = self._in_poseIn.read().data
+            self._log.RTC_INFO("in_pose: " + str(pose))
+            px = pose.position.x
+            py = pose.position.y
+            pz = pose.position.z
+            rp = pose.orientation.p
+            rr = pose.orientation.r
+            ry = pose.orientation.y
+            self._controller.movel((px, py, pz, rp, rr, ry))
+
+    def _move_by_joints(self):
+        # move by joints
+        if self._in_jointIn.isNew():
+            joints = self._in_jointIn.read().data
+            self._log.RTC_INFO("in_joint: " + str(joints))
+            if len(joints) == 6:
+                self._controller.movej(joints)
+
+    def _control_gripper(self):
+        # control gripper
+        if self._gripIn.isNew():
+            grip = self._gripIn.read().data
+            self._log.RTC_INFO("grip: " + str(grip))
+            if grip == 0:
+                self._controller.open_gripper()
+            elif grip == 1:
+                self._controller.close_gripper()
+
+    def _output_joints(self):
+        # output joints information
+        joints = self._controller.getj()
+        self._log.RTC_DEBUG("out_joint: " + str(joints))
+        self._d_out_joint.data = joints
+        self._out_jointOut.write()
+
+    def _output_pose(self):
+        # output pose information
+        pose = self._controller.getl()
+        self._log.RTC_DEBUG("out_pose: " + str(pose))
+        self._d_out_pose.data = RTC.Pose3D(RTC.Point3D(pose[0],
+                                                       pose[1],
+                                                       pose[2]),
+                                           RTC.Orientation3D(pose[3],
+                                                             pose[4],
+                                                             pose[5]))
+        self._out_poseOut.write()
+
+    def output_moving(self):
+        # output moving information
+        moving = self._controller.is_moving()
+        self._log.RTC_DEBUG("is_moving: " + str(moving))
+        self._d_is_moving.data = moving
+        self._is_movingOut.write()
+
+    def output_force(self):
+        # output force information
+        force = self._controller.get_force()
+        self._log.RTC_DEBUG("force: " + str(force))
+        self._d_force.data = [force]
+        self._forceOut.write()
 
 
 def URRobotControllerRTCInit(manager):
