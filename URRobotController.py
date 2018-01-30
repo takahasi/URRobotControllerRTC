@@ -100,7 +100,7 @@ class URRobotController():
         else:
             return False
 
-    def get_acc_vel(self):
+    def get_acc_vel(self, a=None, v=None):
         """Set accel and velocity for move.
 
         Note:
@@ -113,7 +113,15 @@ class URRobotController():
             a: Target acceleration.
             v: Target velocity.
         """
-        return self._accel, self._velocity
+        if a:
+            acc = a
+        else:
+            acc = self._accel
+        if v:
+            vel = v
+        else:
+            vel = self._velocity
+        return acc, vel
 
     def set_acc_vel(self, a=None, v=None):
         """Get accel and velocity for move.
@@ -250,8 +258,7 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            self.set_acc_vel(a, v)
-            ac, vl = self.get_acc_vel()
+            ac, vl = self.get_acc_vel(a, v)
             self.__robot.movel(pos, acc=ac, vel=vl, wait=self.__sync_mode)
         else:
             logging.error("robot is not initialized in " +
@@ -271,8 +278,7 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            self.set_acc_vel(a, v)
-            ac, vl = self.get_acc_vel()
+            ac, vl = self.get_acc_vel(a, v)
             self.__robot.movej(joints, acc=ac, vel=vl, wait=self.__sync_mode)
         else:
             logging.error("robot is not initialized in " +
@@ -293,8 +299,7 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            self.set_acc_vel(a, v)
-            ac, vl = self.get_acc_vel()
+            ac, vl = self.get_acc_vel(a, v)
             self.__robot.movels(poslist, acc=ac, vel=vl, wait=self.__sync_mode)
         else:
             logging.error("robot is not initialized in " +
@@ -315,8 +320,7 @@ class URRobotController():
             None.
         """
         if self.__robot:
-            self.set_acc_vel(a, v)
-            ac, vl = self.get_acc_vel()
+            ac, vl = self.get_acc_vel(a, v)
             self.__robot.translate_tool(
                 vec, acc=ac, vel=vl, wait=self.__sync_mode)
         else:
@@ -431,7 +435,6 @@ class URRobotController():
         if self.__robot and self.__gripper:
             try:
                 self.__gripper.open_gripper()
-                self.__robot.send_program(self.__gripper.ret_program_to_run)
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)
@@ -457,7 +460,6 @@ class URRobotController():
         if self.__robot and self.__gripper:
             try:
                 self.__gripper.close_gripper()
-                self.__robot.send_program(self.__gripper.ret_program_to_run)
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)

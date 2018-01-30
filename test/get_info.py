@@ -13,13 +13,12 @@ __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
 __license__ = "LGPLv3"
 
-p0 = [0.4499896971299584, 0.010868012647159229, 0.42582105267981735, 1.9594021624255316, -2.4458589591229, -0.010335049876509362]
-p1 = [0.4475587119903788, -0.2827557257978153, 0.42585290981810753, 1.9593681101464684, -2.446007745533187, -0.010273222638616878]
-p2 = [0.447637978406461, -0.5683245782151384, 0.4257649741698107, 1.9594274354944727, -2.4459466754895915, -0.010458876339814299]
-
-j0 = [0.2728744447231293, -1.4523699919330042, -1.6953614393817347, -1.575341526662008, 1.5762203931808472, 0.49057650566101074]
-j1 = [-0.3515561262713831, -1.6438754240619105, -1.5085118452655237, -1.5705683867083948, 1.5701439380645752, -0.13378745714296514]
-j2 = [-0.7486026922809046, -2.151830498372213, -0.8255012671100062, -1.743802849446432, 1.5667164325714111, -0.5313523451434534]
+p0 = [0.0902, -0.6437, 0.3808, -3.0154, 0.4781, 0.0619]
+p1 = [-0.1929, -0.6305, 0.3072, -2.9113, 1.1439, 0.0399]
+p2 = [0.5388, -0.3699, 0.3586, 2.9431, 0.7792, -0.0169]
+j0 = [1.5434, -1.1797, 1.207, -1.5047, -1.597, -2.8515]
+j1 = [1.1094, -1.1491, 1.3715, -1.7811, -1.595, -2.8519]
+j2 = [2.3783, -1.1966, 1.3288, -1.7788, -1.6285, -2.8519]
 
 
 def test_getl(r):
@@ -111,47 +110,20 @@ def test_reallocate_object(r):
 
 def test():
 
-    print("### Start test for URRobotController")
     try:
         r = urrobot()
-        r.set_sync_mode()
 
-        test_getl(r)
-        test_getj(r)
-        test_get_force(r)
-        test_set_payload(r)
-        test_movel(r)
-        test_movej(r)
-        test_movels(r)
-
-        r = test_reallocate_object(r)
-
-        test_translate_tool(r)
-        test_async_mode(r)
-        test_freedrive(r)
-        test_gripper(r)
-
-        r.finalize()
-
-        # checks afetr close
-        test_getl(r)
-        test_getj(r)
-        test_get_force(r)
-        test_set_payload(r)
-        test_movel(r)
-        test_movej(r)
-        test_movels(r)
-        test_translate_tool(r)
-        test_async_mode(r)
-        test_freedrive(r)
-        test_gripper(r)
+        print("### getl() ###")
+        print(r.getl())
+        print("### getj() ###")
+        print(r.getj())
+        print("### get_force() ###")
+        print(r.get_force())
 
     except urrobot.URxException:
         print("### Failed. URx exception")
     except Exception as e:
         print("### Failed. Exception: " + format(str(e)))
-    else:
-        print("### Passed.")
 
 
 if __name__ == '__main__':
