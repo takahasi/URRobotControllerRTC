@@ -226,6 +226,9 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         if not self._controller.is_rgripper_available():
             self._log.RTC_WARN("URx gripper is not available")
 
+        self._middle.set_controller(self._controller)
+        self._common.set_controller(self._controller)
+
         return RTC.RTC_OK
 
     ##
@@ -242,6 +245,9 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         if self._controller:
             self._controller.finalize()
             self._controller = None
+            self._middle.unset_controller()
+            self._common.unset_controller()
+
         return RTC.RTC_OK
 
     ##

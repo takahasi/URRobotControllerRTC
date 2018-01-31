@@ -12,7 +12,7 @@ __copyright__ = "Copyright 2017, Saburo Takahashi"
 __license__ = "LGPLv3"
 
 
-class URRobotController():
+class URRobotController(object):
     """Universal Robot (URx) controller RTC.
 
         This class is using urx package.
@@ -21,13 +21,24 @@ class URRobotController():
     URxException = urx.urrobot.RobotException
 
     # Private member
+    __instance = None
     __robot = None
     __gripper = None
     __sync_mode = False
     _accel = 0.4
     _velocity = 0.5
 
+    # singleton
+    def __new__(cls, ip):
+        if not cls.__instance:
+            cls.__instance = object.__new__(cls)
+        return cls.__instance
+
     def __init__(self, ip="192.168.1.101"):
+        if self.__robot:
+            logging.info("instance is already exist")
+            return
+
         logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s',
                             level=logging.INFO)
 

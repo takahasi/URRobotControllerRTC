@@ -21,12 +21,20 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
     Example class implementing IDL interface JARA_ARM.ManipulatorCommonInterface_Common
     """
 
+    _controller = None
+
     def __init__(self):
         """
         @brief standard constructor
         Initialise member variables here
         """
         pass
+
+    def set_icontroller(self, controller):
+        self._controller = controller
+
+    def unset_icontroller(self):
+        self._controller = None
 
     # RETURN_ID clearAlarms()
     def clearAlarms(self):

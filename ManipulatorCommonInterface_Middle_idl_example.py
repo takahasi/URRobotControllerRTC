@@ -22,6 +22,8 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
     Example class implementing IDL interface JARA_ARM.ManipulatorCommonInterface_Middle
     """
 
+    _controller = None
+
     def __init__(self):
         """
         @brief standard constructor
@@ -29,11 +31,19 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
         """
         pass
 
+    def set_icontroller(self, controller):
+        self._controller = controller
+
+    def unset_icontroller(self):
+        self._controller = None
+
     # RETURN_ID closeGripper()
     def closeGripper(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result
+        if self._controller:
+            self._controller.close_gripper()
+            return True
+        else:
+            return False
 
     # RETURN_ID getBaseOffset(out HgMatrix offset)
     def getBaseOffset(self):
@@ -121,9 +131,11 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID openGripper()
     def openGripper(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result
+        if self._controller:
+            self._controller.close_gripper()
+            return True
+        else:
+            return False
 
     # RETURN_ID pause()
     def pause(self):
@@ -223,22 +235,17 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID setHome(in JointPos jointPoint)
     def setHome(self, jointPoint):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result
+        self._home = jointPoint
+        return True
 
     # RETURN_ID getHome(out JointPos jointPoint)
     def getHome(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result, jointPoint
+        return self._home
 
     # RETURN_ID goHome()
     def goHome(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result
-
+        self._controller.movej(self._home)
+        return True
 
 if __name__ == "__main__":
     import sys
