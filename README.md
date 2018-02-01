@@ -18,14 +18,22 @@ Usage
 $ python URRobotControllerRTC.py
 ```
 
-Unit Test
+Unit Test (Use real robot)
 -----------
 ```
-$ python test/URRobotControllerUT.py
+$ python test/test_robot.py
+```
+
+Unit Test (Use dummy server)
+-----------
+```
+$ git clone https://github.com/SintefRaufossManufacturing/python-urx
+$ python python-urx/tools/fakerobot.py
+$ python test/test_robot.py
 ```
 
 Integration Test
 ----------------
 ```
-$ sh test/URRobotControllerIT.sh
+$ sh test/test_component.sh
 ```

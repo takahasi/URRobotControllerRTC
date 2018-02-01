@@ -29,12 +29,12 @@ class URRobotController(object):
     _velocity = 0.5
 
     # singleton
-    def __new__(cls):
+    def __new__(cls, ip="192.168.1.101", realtime=True):
         if not cls.__instance:
             cls.__instance = object.__new__(cls)
         return cls.__instance
 
-    def __init__(self, ip="192.168.1.101"):
+    def __init__(self, ip="192.168.1.101", realtime=True):
         if self.__robot:
             logging.info("instance is already exist")
             return
@@ -45,7 +45,7 @@ class URRobotController(object):
         logging.info("Create URRobotController IP: " + ip)
 
         try:
-            self.__robot = urx.Robot(ip, use_rt=True)
+            self.__robot = urx.Robot(ip, use_rt=realtime)
             self.__robot.set_tcp((0, 0, 0, 0, 0, 0))
             self.__robot.set_payload(0, (0, 0, 0))
         except self.URxException:
@@ -248,7 +248,7 @@ class URRobotController(object):
             True: Success.
         """
         self.__sync_mode = False
-        return False
+        return True
 
     def is_sync_mode(self):
         """Get synchronous mode.
