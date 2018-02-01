@@ -6,11 +6,11 @@ This is RT-Component(RTC) for Universal Robot(URx)
 Preparation
 -----------
 ```
+$ sudo pip install urx
 $ sudo pip install math3d
-$ git clone https://github.com/SintefRaufossManufacturing/python-urx
-$ cd python-urx
-$ sudo python setup.py install
 ```
+
+Required version: urx >= 0.11
 
 Usage
 -----------

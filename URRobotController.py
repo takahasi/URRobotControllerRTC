@@ -145,12 +145,14 @@ class URRobotController(object):
             v: Target velocity.
 
         Returns:
-            None.
+            True: Success.
         """
         if a:
             self._accel = a
         if v:
             self._velocity = v
+
+        return True
 
     def finalize(self):
         """Finalize URRobotController instance.
@@ -162,14 +164,17 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             self.__robot.close()
             self.__robot = None
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def set_payload(self, weight, vector=(0, 0, 0)):
         """Set payload in kg and cog.
@@ -182,14 +187,17 @@ class URRobotController(object):
             vector: Center of gravity in 3d vector.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             # set payload in kg & cog
             self.__robot.set_payload(weight, vector)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def is_moving(self):
         """Get status of runnning program.
@@ -222,9 +230,10 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
         """
         self.__sync_mode = True
+        return True
 
     def set_async_mode(self):
         """Set asynchronous mode (NOT wait until program ends).
@@ -236,9 +245,10 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
         """
         self.__sync_mode = False
+        return False
 
     def is_sync_mode(self):
         """Get synchronous mode.
@@ -266,14 +276,17 @@ class URRobotController(object):
             v: Target velocity.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             ac, vl = self.get_acc_vel(a, v)
             self.__robot.movel(pos, acc=ac, vel=vl, wait=self.__sync_mode)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def movej(self, joints, a=None, v=None):
         """Move the robot by joint movement.
@@ -286,14 +299,17 @@ class URRobotController(object):
             v: Target velocity.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             ac, vl = self.get_acc_vel(a, v)
             self.__robot.movej(joints, acc=ac, vel=vl, wait=self.__sync_mode)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def movels(self, poslist, a=None, v=None):
         """Sequential move the robot in a linear path.
@@ -307,14 +323,17 @@ class URRobotController(object):
             v: Target velocity.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             ac, vl = self.get_acc_vel(a, v)
             self.__robot.movels(poslist, acc=ac, vel=vl, wait=self.__sync_mode)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def translate_tool(self, vec, a=None, v=None):
         """Move tool in base coordinate, keeping orientation.
@@ -328,15 +347,18 @@ class URRobotController(object):
             v: Target velocity.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             ac, vl = self.get_acc_vel(a, v)
             self.__robot.translate_tool(
                 vec, acc=ac, vel=vl, wait=self.__sync_mode)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def getl(self):
         """Get TCP position.
@@ -349,6 +371,7 @@ class URRobotController(object):
 
         Returns:
             position: list of TCP position (X, Y, Z, Rx, Ry, Rz)
+                      if failed to get, return (0, 0, 0, 0, 0, 0)
         """
         if self.__robot:
             return self.__robot.getl()
@@ -368,6 +391,7 @@ class URRobotController(object):
 
         Returns:
             position: list of joint position (J0, J1, J2, J3, J4, J5)
+                      if failed to get, return (0, 0, 0, 0, 0, 0)
         """
         if self.__robot:
             return self.__robot.getj()
@@ -386,7 +410,8 @@ class URRobotController(object):
             None.
 
         Returns:
-            force: value of force
+            force: value of TCP force
+                   if failed to get, return 0
         """
         if self.__robot:
             return self.__robot.get_force()
@@ -405,13 +430,16 @@ class URRobotController(object):
             time: Time to keep freedrive mode in seconds (default=60s).
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             self.__robot.set_freedrive(True, timeout=time)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def end_freedrive(self):
         """End freedrive mode.
@@ -423,13 +451,16 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot:
             self.__robot.set_freedrive(None)
+            return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
 
     def open_gripper(self):
         """Open gripper.
@@ -441,7 +472,8 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot and self.__gripper:
             try:
@@ -449,12 +481,17 @@ class URRobotController(object):
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)
+                return False
             except Exception as e:
                 logging.error("except: " + format(str(e)) +
                               " in " + sys._getframe().f_code.co_name)
+                return False
         else:
             logging.error("robot or gripper is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
+
+        return True
 
     def close_gripper(self):
         """Close gripper.
@@ -466,7 +503,8 @@ class URRobotController(object):
             None.
 
         Returns:
-            None.
+            True: Success.
+            False: Failed.
         """
         if self.__robot and self.__gripper:
             try:
@@ -474,12 +512,17 @@ class URRobotController(object):
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)
+                return False
             except Exception as e:
                 logging.error("except: " + format(str(e)) +
                               " in " + sys._getframe().f_code.co_name)
+                return False
         else:
             logging.error("robot or gripper is not initialized in " +
                           sys._getframe().f_code.co_name)
+            return False
+
+        return True
 
 
 if __name__ == '__main__':
