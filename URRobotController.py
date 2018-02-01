@@ -29,7 +29,7 @@ class URRobotController(object):
     _velocity = 0.5
 
     # singleton
-    def __new__(cls, ip):
+    def __new__(cls):
         if not cls.__instance:
             cls.__instance = object.__new__(cls)
         return cls.__instance

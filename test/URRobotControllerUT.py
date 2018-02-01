@@ -21,6 +21,15 @@ j0 = [0.2728744447231293, -1.4523699919330042, -1.6953614393817347, -1.575341526
 j1 = [-0.3515561262713831, -1.6438754240619105, -1.5085118452655237, -1.5705683867083948, 1.5701439380645752, -0.13378745714296514]
 j2 = [-0.7486026922809046, -2.151830498372213, -0.8255012671100062, -1.743802849446432, 1.5667164325714111, -0.5313523451434534]
 
+def test_singleton(r):
+    print("### check sigleton")
+    p = urrobot()
+    if id(r) == id(p):
+    	print("OK")
+    else:
+    	print("NG")
+
+
 
 def test_getl(r):
     print("### call getl")
@@ -114,6 +123,9 @@ def test():
     print("### Start test for URRobotController")
     try:
         r = urrobot()
+
+        test_singleton(r)
+
         r.set_sync_mode()
 
         test_getl(r)
@@ -145,6 +157,8 @@ def test():
         test_async_mode(r)
         test_freedrive(r)
         test_gripper(r)
+
+        del(r)
 
     except urrobot.URxException:
         print("### Failed. URx exception")
