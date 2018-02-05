@@ -31,7 +31,7 @@ class URRobotController(object):
     # singleton
     def __new__(cls, ip="192.168.1.101", realtime=True):
         if not cls.__instance:
-            cls.__instance = object.__new__(cls)
+            cls.__instance = object.__new__(cls, ip, realtime)
         return cls.__instance
 
     def __init__(self, ip="192.168.1.101", realtime=True):
@@ -75,7 +75,8 @@ class URRobotController(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.finalize()
 
-    def is_robot_available(self):
+    @property
+    def robot_available(self):
         """Get robot instance is available or not.
 
         Note:
@@ -93,7 +94,8 @@ class URRobotController(object):
         else:
             return False
 
-    def is_gripper_available(self):
+    @property
+    def gripper_available(self):
         """Get gripper instance is available or not.
 
         Note:

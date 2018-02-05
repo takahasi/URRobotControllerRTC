@@ -31,10 +31,10 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
         """
         pass
 
-    def set_icontroller(self, controller):
+    def set_controller(self, controller):
         self._controller = controller
 
-    def unset_icontroller(self):
+    def unset_controller(self):
         self._controller = None
 
     # RETURN_ID closeGripper()

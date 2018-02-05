@@ -136,6 +136,7 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
     #
     def onInitialize(self):
         # Bind variables and configuration variable
+        self.bindParameter("ip_address", self._ip_address, "192.168.1.101")
 
         # Set InPort buffers
         self.addInPort("mode", self._modeIn)
@@ -216,14 +217,13 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
     #
     #
     def onActivated(self, ec_id):
-
         self._controller = urrobot(ip=self._ip_address[0])
-        if not self._controller.is_robot_available():
+        if not self._controller.robot_available:
             self._log.RTC_ERROR("URx robot is not available")
             self._controller = None
             return RTC.RTC_ERROR
 
-        if not self._controller.is_rgripper_available():
+        if not self._controller.gripper_available:
             self._log.RTC_WARN("URx gripper is not available")
 
         self._middle.set_controller(self._controller)
@@ -286,10 +286,10 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         self._output_pose()
 
         # output moving information
-        self. output_moving()
+        self._output_moving()
 
         # output force information
-        self. output_force()
+        self._output_force()
 
         return RTC.RTC_OK
 
@@ -372,7 +372,7 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
             if mode == 10:
                 self._log.RTC_INFO("start freedrive mode")
                 self._controller.start_freedrive(time=120)
-            elif mode == 1:
+            elif mode == 2:
                 self._log.RTC_INFO("start slow mode")
                 self._controller.end_freedrive()
                 self._controller.set_acc_vel(a=0.3, v=0.3)
@@ -431,14 +431,14 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
                                                              pose[5]))
         self._out_poseOut.write()
 
-    def output_moving(self):
+    def _output_moving(self):
         # output moving information
         moving = self._controller.is_moving()
         self._log.RTC_DEBUG("is_moving: " + str(moving))
         self._d_is_moving.data = moving
         self._is_movingOut.write()
 
-    def output_force(self):
+    def _output_force(self):
         # output force information
         force = self._controller.get_force()
         self._log.RTC_DEBUG("force: " + str(force))
