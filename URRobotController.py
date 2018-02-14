@@ -4,6 +4,7 @@
 
 import sys
 import logging
+from datetime import datetime
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
 
@@ -25,8 +26,8 @@ class URRobotController(object):
     __robot = None
     __gripper = None
     __sync_mode = False
-    _accel = 0.4
-    _velocity = 0.5
+    _accel = 0.6
+    _velocity = 0.6
 
     # singleton
     def __new__(cls, ip="192.168.1.101", realtime=True):
@@ -42,10 +43,16 @@ class URRobotController(object):
         logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s',
                             level=logging.INFO)
 
-        logging.info("Create URRobotController IP: " + ip)
+        # not use realtime port in stub mode
+        if ip == "localhost":
+            self.__realtime = False
+        else:
+            self.__realtime = realtime
+
+        logging.info("Create URRobotController IP: " + ip, self.__realtime)
 
         try:
-            self.__robot = urx.Robot(ip, use_rt=realtime)
+            self.__robot = urx.Robot(ip, use_rt=self.__realtime)
             self.__robot.set_tcp((0, 0, 0, 0, 0, 0))
             self.__robot.set_payload(0, (0, 0, 0))
         except self.URxException:
@@ -66,6 +73,8 @@ class URRobotController(object):
             logging.error("exception: " + format(str(e)) + " in init gripper")
             self.__gripper = None
 
+        self._update_send_time()
+
     def __del__(self):
         self.finalize()
 
@@ -74,6 +83,17 @@ class URRobotController(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.finalize()
+
+    def _update_send_time(self):
+        self.__latest_send_time = datetime.now()
+
+    def _expire_send_time(self):
+        diff = datetime.now() - self.__latest_send_time
+        # prevent control until 100ms after
+        if diff.microseconds > 100000:
+            return True
+        else:
+            return False
 
     @property
     def robot_available(self):
@@ -113,7 +133,39 @@ class URRobotController(object):
         else:
             return False
 
-    def get_acc_vel(self, a=None, v=None):
+    @property
+    def vel(self):
+        """Get velocity for move.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            v: Target velocity.
+        """
+        return self._velocity
+
+    @vel.setter
+    def vel(self, v=None):
+        """Set velocity for move.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            v: Target velocity.
+        """
+        if v:
+            self._velocity = v
+
+    @property
+    def acc(self):
         """Set accel and velocity for move.
 
         Note:
@@ -124,19 +176,11 @@ class URRobotController(object):
 
         Returns:
             a: Target acceleration.
-            v: Target velocity.
         """
-        if a:
-            acc = a
-        else:
-            acc = self._accel
-        if v:
-            vel = v
-        else:
-            vel = self._velocity
-        return acc, vel
+        return self._accel
 
-    def set_acc_vel(self, a=None, v=None):
+    @acc.setter
+    def acc(self, a=None):
         """Get accel and velocity for move.
 
         Note:
@@ -144,17 +188,12 @@ class URRobotController(object):
 
         Args:
             a: Target acceleration.
-            v: Target velocity.
 
         Returns:
             True: Success.
         """
         if a:
             self._accel = a
-        if v:
-            self._velocity = v
-
-        return True
 
     def finalize(self):
         """Finalize URRobotController instance.
@@ -195,12 +234,14 @@ class URRobotController(object):
         if self.__robot:
             # set payload in kg & cog
             self.__robot.set_payload(weight, vector)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
             return False
 
+    @property
     def is_moving(self):
         """Get status of runnning program.
 
@@ -216,43 +257,14 @@ class URRobotController(object):
         """
         if self.__robot:
             r = self.__robot
-            return r.is_running() and r.is_program_running()
+            return r.is_running() and r.is_program_running() and not self._expire_send_time()
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
             return False
 
-    def set_sync_mode(self):
-        """Set synchronous mode (wait until program ends).
-
-        Note:
-            None.
-
-        Args:
-            None.
-
-        Returns:
-            True: Success.
-        """
-        self.__sync_mode = True
-        return True
-
-    def set_async_mode(self):
-        """Set asynchronous mode (NOT wait until program ends).
-
-        Note:
-            None.
-
-        Args:
-            None.
-
-        Returns:
-            True: Success.
-        """
-        self.__sync_mode = False
-        return True
-
-    def is_sync_mode(self):
+    @property
+    def sync_mode(self):
         """Get synchronous mode.
 
         Note:
@@ -266,6 +278,21 @@ class URRobotController(object):
             False: Asynchronous mode.
         """
         return self.__sync_mode
+
+    @sync_mode.setter
+    def sync_mode(self, val):
+        """Set synchronous mode (wait until program ends).
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Success.
+        """
+        self.__sync_mode = val
 
     def movel(self, pos, a=None, v=None):
         """Move the robot in a linear path.
@@ -282,8 +309,13 @@ class URRobotController(object):
             False: Failed.
         """
         if self.__robot:
-            ac, vl = self.get_acc_vel(a, v)
-            self.__robot.movel(pos, acc=ac, vel=vl, wait=self.__sync_mode)
+            self.acc = a
+            self.vel = v
+            self.__robot.movel(pos,
+                               acc=self.acc,
+                               vel=self.vel,
+                               wait=self.sync_mode)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -305,8 +337,13 @@ class URRobotController(object):
             False: Failed.
         """
         if self.__robot:
-            ac, vl = self.get_acc_vel(a, v)
-            self.__robot.movej(joints, acc=ac, vel=vl, wait=self.__sync_mode)
+            self.acc = a
+            self.vel = v
+            self.__robot.movej(joints,
+                               acc=self.acc,
+                               vel=self.vel,
+                               wait=self.sync_mode)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -329,8 +366,13 @@ class URRobotController(object):
             False: Failed.
         """
         if self.__robot:
-            ac, vl = self.get_acc_vel(a, v)
-            self.__robot.movels(poslist, acc=ac, vel=vl, wait=self.__sync_mode)
+            self.acc = a
+            self.vel = v
+            self.__robot.movels(poslist,
+                                acc=self.acc,
+                                vel=self.vel,
+                                wait=self.sync_mode)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -353,9 +395,13 @@ class URRobotController(object):
             False: Failed.
         """
         if self.__robot:
-            ac, vl = self.get_acc_vel(a, v)
-            self.__robot.translate_tool(
-                vec, acc=ac, vel=vl, wait=self.__sync_mode)
+            self.acc = a
+            self.vel = v
+            self.__robot.translate_tool(vec,
+                                        acc=self.acc,
+                                        vel=self.vel,
+                                        wait=self.sync_mode)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -415,7 +461,11 @@ class URRobotController(object):
             force: value of TCP force
                    if failed to get, return 0
         """
-        if self.__robot:
+        if not self.__realtime:
+            logging.info("cannot use realtime port in " +
+                         sys._getframe().f_code.co_name)
+            return 0
+        elif self.__robot:
             return self.__robot.get_force()
         else:
             logging.error("robot is not initialized in " +
@@ -437,6 +487,7 @@ class URRobotController(object):
         """
         if self.__robot:
             self.__robot.set_freedrive(True, timeout=time)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -458,6 +509,7 @@ class URRobotController(object):
         """
         if self.__robot:
             self.__robot.set_freedrive(None)
+            self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
@@ -480,6 +532,7 @@ class URRobotController(object):
         if self.__robot and self.__gripper:
             try:
                 self.__gripper.open_gripper()
+                self._update_send_time()
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)
@@ -511,6 +564,7 @@ class URRobotController(object):
         if self.__robot and self.__gripper:
             try:
                 self.__gripper.close_gripper()
+                self._update_send_time()
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
                               sys._getframe().f_code.co_name)

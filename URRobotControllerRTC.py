@@ -285,11 +285,11 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
         # output pose information
         self._output_pose()
 
-        # output moving information
-        self._output_moving()
-
         # output force information
         self._output_force()
+
+        # output moving information
+        self._output_moving()
 
         return RTC.RTC_OK
 
@@ -375,11 +375,13 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
             elif mode == 2:
                 self._log.RTC_INFO("start slow mode")
                 self._controller.end_freedrive()
-                self._controller.set_acc_vel(a=0.3, v=0.3)
+                self._controller.acc = 0.3
+                self._controller.vel = 0.3
             else:
                 self._log.RTC_INFO("start normal mode")
                 self._controller.end_freedrive()
-                self._controller.set_acc_vel(a=0.6, v=0.6)
+                self._controller.acc = 0.6
+                self._controller.vel = 0.6
 
     def _move_by_pose(self):
         # move by pose
@@ -431,19 +433,19 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
                                                              pose[5]))
         self._out_poseOut.write()
 
-    def _output_moving(self):
-        # output moving information
-        moving = self._controller.is_moving()
-        self._log.RTC_DEBUG("is_moving: " + str(moving))
-        self._d_is_moving.data = moving
-        self._is_movingOut.write()
-
     def _output_force(self):
         # output force information
         force = self._controller.get_force()
         self._log.RTC_DEBUG("force: " + str(force))
         self._d_force.data = [force]
         self._forceOut.write()
+
+    def _output_moving(self):
+        # output moving information
+        moving = self._controller.is_moving
+        self._log.RTC_DEBUG("is_moving: " + str(moving))
+        self._d_is_moving.data = moving
+        self._is_movingOut.write()
 
 
 def URRobotControllerRTCInit(manager):

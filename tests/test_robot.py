@@ -99,18 +99,18 @@ class TestURRobot(unittest.TestCase):
 
     def test_async_mode(self):
         print("### start sync_mode")
-        self.assertFalse(self._r.is_sync_mode())
-        self.assertTrue(self._r.set_sync_mode())
-        self.assertTrue(self._r.is_sync_mode())
-        self.assertTrue(self._r.set_async_mode())
-        self.assertFalse(self._r.is_sync_mode())
+        self.assertFalse(self._r.sync_mode)
+        self._r.sync_mode = True
+        self.assertTrue(self._r.sync_mode)
+        self._r.sync_mode = False
+        self.assertFalse(self._r.sync_mode)
 
     def test_movel(self):
         print("### start movel")
         if self.use_robot:
-            self.assertTrue(self._r.set_sync_mode())
+            self._r.set_sync_mode = True
         else:
-            self.assertTrue(self._r.set_async_mode())
+            self._r.set_sync_mode = False
         self.assertTrue(self._r.movel(self.p0))
         self.assertTrue(self._r.movel(self.p1, v=0.4))
         self.assertTrue(self._r.movel(self.p2, a=0.4))
@@ -121,9 +121,9 @@ class TestURRobot(unittest.TestCase):
     def test_movej(self):
         print("### start movej")
         if self.use_robot:
-            self.assertTrue(self._r.set_sync_mode())
+            self._r.set_sync_mode = True
         else:
-            self.assertTrue(self._r.set_async_mode())
+            self._r.set_sync_mode = False
         self.assertTrue(self._r.movej(self.j0))
         self.assertTrue(self._r.movej(self.j1, v=0.4))
         self.assertTrue(self._r.movej(self.j2, a=0.4))
@@ -139,18 +139,18 @@ class TestURRobot(unittest.TestCase):
         l.append(self.p0)
         print("### call movels")
         if self.use_robot:
-            self.assertTrue(self._r.set_sync_mode())
+            self._r.set_sync_mode = True
         else:
-            self.assertTrue(self._r.set_async_mode())
+            self._r.set_sync_mode = False
         self.assertTrue(self._r.movels(l, v=0.6, a=0.4))
         self.assertTrue(self._r.finalize())
         self.assertFalse(self._r.movels(l, v=0.6, a=0.4))
 
     def test_translate_tool(self):
         if self.use_robot:
-            self.assertTrue(self._r.set_sync_mode())
+            self._r.set_sync_mode = True
         else:
-            self.assertTrue(self._r.set_async_mode())
+            self._r.set_sync_mode = False
         print("### tool up")
         self.assertTrue(self._r.translate_tool((0, 0, 0.05), a=0.3))
         print("### tool down")
@@ -181,6 +181,24 @@ class TestURRobot(unittest.TestCase):
         self.assertTrue(self._r.finalize())
         self.assertFalse(self._r.open_gripper())
         self.assertFalse(self._r.close_gripper())
+
+    def test_acc(self):
+        print("### acc()")
+        self._r.acc = 10
+        self.assertTrue(self._r.acc == 10)
+        self._r.acc = None
+        self.assertTrue(self._r.acc == 10)
+
+    def test_vel(self):
+        print("### vel()")
+        self._r.vel = 5
+        self.assertTrue(self._r.vel == 5)
+        self._r.vel = None
+        self.assertTrue(self._r.vel == 5)
+
+    def test_is_moving(self):
+        print("### is_moving()")
+        self.assertFalse(self._r.is_moving)
 
 
 def test():
