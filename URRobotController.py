@@ -257,7 +257,7 @@ class URRobotController(object):
         """
         if self.__robot:
             r = self.__robot
-            return r.is_running() and r.is_program_running() and not self._expire_send_time()
+            return r.is_program_running() or not self._expire_send_time()
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
