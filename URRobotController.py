@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
+import ManipulatorCommonInterface_Middle_idl
 
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
@@ -75,6 +76,10 @@ class URRobotController(object):
 
         self._update_send_time()
 
+        # use pause() for service port
+        self._joints_goal = []
+        self._middle = None
+
     def __del__(self):
         self.finalize()
 
@@ -95,6 +100,12 @@ class URRobotController(object):
         else:
             return False
 
+    def set_middle(self, middle):
+        self._middle = middle
+
+    def unset_middle(self):
+        self._middle = None
+        
     @property
     def robot_available(self):
         """Get robot instance is available or not.
@@ -336,7 +347,11 @@ class URRobotController(object):
             True: Success.
             False: Failed.
         """
+        if self._middle._middle_idl_state == self._middle.MIDDLE_IDL_STATE_PAUSE:
+            return False
+        
         if self.__robot:
+            self._joints_goal = joints
             self.acc = a
             self.vel = v
             self.__robot.movej(joints,
@@ -548,6 +563,43 @@ class URRobotController(object):
 
         return True
 
+    def gripper_action(self,value):
+        """gripper action.
+
+        Note:
+            None.
+
+        Args:
+            value: value from 0 to 255.
+                   0 is open, 255 is close.
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        if value < 0 or value > 255:
+            return False
+                
+        if self.__robot and self.__gripper:
+            try:
+                self.__gripper.gripper_action(value)
+                self._update_send_time()
+            except self.URxException:
+                logging.error("URx exception was ooccured in " +
+                              sys._getframe().f_code.co_name)
+                return False
+            except Exception as e:
+                logging.error("except: " + format(str(e)) +
+                              " in " + sys._getframe().f_code.co_name)
+                return False
+        else:
+            logging.error("robot or gripper is not initialized in " +
+                          sys._getframe().f_code.co_name)
+            return False
+
+        return True
+
+    
     def close_gripper(self):
         """Close gripper.
 
@@ -580,6 +632,56 @@ class URRobotController(object):
 
         return True
 
+    def stopj(self, a=None):
+        """Decelerate joint speeds to zero.
+
+        Note:
+            None.
+
+        Args:
+            a: joint acceleration [rad/s^2]
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        if self.__robot:
+            self.acc = a
+            self.__robot.stopj(self.acc)
+            
+            self._update_send_time()
+            return True
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
+            return False    
+
+    def get_pos(self):
+        """get current transform from base to to tcp
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        pose = []
+        if self.__robot:
+            pose = self.__robot.get_pos()
+            
+            self._update_send_time()
+            return True, pose
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
+            return False, pose
+        
+    def get_joints_goal(self):
+        return self._joints_goal
 
 if __name__ == '__main__':
     URRobotController()
