@@ -15,6 +15,10 @@ from omniORB import CORBA, PortableServer
 import JARA_ARM
 import JARA_ARM__POA
 
+import ManipulatorCommonInterface_DataTypes_idl as DATATYPES_IDL
+import ManipulatorCommonInterface_Common_idl as COMMON_IDL
+import math
+
 
 class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterface_Common):
     """
@@ -29,13 +33,21 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
         @brief standard constructor
         Initialise member variables here
         """
-        pass
+        self._axisnum = 6
+        self._limit_joint_deg = [[360, -360],[360, -360],[360, -360],[360, -360],[360, -360],[360, -360]]
 
     def set_controller(self, controller):
         self._controller = controller
 
     def unset_controller(self):
         self._controller = None
+
+    def set_middle(self, middle):
+        self._middle = middle
+
+    def unset_middle(self):
+        self._middle = None
+
 
     # RETURN_ID clearAlarms()
     def clearAlarms(self):
@@ -51,27 +63,42 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID getFeedbackPosJoint(out JointPos pos)
     def getFeedbackPosJoint(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result, pos
+        if self._controller:
+            return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''),  self._controller.getj()
+        else:
+            return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG,''),  []
 
     # RETURN_ID getManipInfo(out ManipInfo mInfo)
     def getManipInfo(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result, mInfo
+        return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''),  COMMON_IDL._0_JARA_ARM.ManipInfo('Universal Robots A/S', 'UR5', self._axisnum, 1, True)
 
     # RETURN_ID getSoftLimitJoint(out LimitSeq softLimit)
     def getSoftLimitJoint(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result, softLimit
+        limit_joint = []
+
+        for i in range(self._axisnum):
+            limit_joint.append(DATATYPES_IDL._0_JARA_ARM.LimitValue(math.radians(self._limit_joint_deg[i][0]), math.radians(self._limit_joint_deg[i][1])))
+
+        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''), limit_joint
+        
 
     # RETURN_ID getState(out ULONG state)
     def getState(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
-        # *** Implement me
-        # Must return: result, state
+        #only get 0x02(moving) 0x10(pause)
+        state = 0
+        
+        if not self._controller or not self._middle:
+            return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG,''), state
+            
+        #check moving
+        if self._controller.is_moving:
+            state = state | 0x01
+            
+        #check pause
+        if self._middle._middle_idl_state == self._middle.MIDDLE_IDL_STATE_PAUSE:
+            state = state | 0x10
+
+        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''), state
 
     # RETURN_ID servoOFF()
     def servoOFF(self):
