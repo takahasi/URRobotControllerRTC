@@ -34,7 +34,9 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
         Initialise member variables here
         """
         self._axisnum = 6
-        self._limit_joint_deg = [[360, -360],[360, -360],[360, -360],[360, -360],[360, -360],[360, -360]]
+        self._limit_joint_deg = [[360, -360], [360, -360],
+                                 [360, -360], [360, -360],
+                                 [360, -360], [360, -360]]
 
     def set_controller(self, controller):
         self._controller = controller
@@ -48,6 +50,12 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
     def unset_middle(self):
         self._middle = None
 
+    def _make_returni_id(okng, comment):
+        if okng == "NG":
+            ret = DATATYPES_IDL._0_JARA_ARM.NG
+        else:
+            ret = DATATYPES_IDL._0_JARA_ARM.OK
+        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(ret, comment)
 
     # RETURN_ID clearAlarms()
     def clearAlarms(self):
@@ -64,41 +72,41 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
     # RETURN_ID getFeedbackPosJoint(out JointPos pos)
     def getFeedbackPosJoint(self):
         if self._controller:
-            return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''),  self._controller.getj()
+            return self._make_return_id("OK", ''),  self._controller.getj()
         else:
-            return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG,''),  []
+            return self._make_return_id("NG", ''),  []
 
     # RETURN_ID getManipInfo(out ManipInfo mInfo)
     def getManipInfo(self):
-        return  DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''),  COMMON_IDL._0_JARA_ARM.ManipInfo('Universal Robots A/S', 'UR5', self._axisnum, 1, True)
+        return self._make_return_id("OK", ''),  COMMON_IDL._0_JARA_ARM.ManipInfo('Universal Robots A/S', 'UR5', self._axisnum, 1, True)
 
     # RETURN_ID getSoftLimitJoint(out LimitSeq softLimit)
     def getSoftLimitJoint(self):
         limit_joint = []
 
         for i in range(self._axisnum):
-            limit_joint.append(DATATYPES_IDL._0_JARA_ARM.LimitValue(math.radians(self._limit_joint_deg[i][0]), math.radians(self._limit_joint_deg[i][1])))
+            limit_joint.append(DATATYPES_IDL._0_JARA_ARM.LimitValue(math.radians(
+                self._limit_joint_deg[i][0]), math.radians(self._limit_joint_deg[i][1])))
 
-        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''), limit_joint
-        
+        return self._make_return_id("OK", ''), limit_joint
 
     # RETURN_ID getState(out ULONG state)
     def getState(self):
-        #only get 0x02(moving) 0x10(pause)
+        # only get 0x02(moving) 0x10(pause)
         state = 0
-        
+
         if not self._controller or not self._middle:
-            return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG,''), state
-            
-        #check moving
+            return self._make_return_id("NG", ''), state
+
+        # check moving
         if self._controller.is_moving:
             state = state | 0x01
-            
-        #check pause
+
+        # check pause
         if self._middle._middle_idl_state == self._middle.MIDDLE_IDL_STATE_PAUSE:
             state = state | 0x10
 
-        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK,''), state
+        return self._make_return_id("OK", ''), state
 
     # RETURN_ID servoOFF()
     def servoOFF(self):

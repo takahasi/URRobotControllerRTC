@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
-import ManipulatorCommonInterface_Middle_idl
+
 
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
@@ -78,7 +78,7 @@ class URRobotController(object):
 
         # use pause() for service port
         self._joints_goal = []
-        self._middle = None
+        self._pause = False
 
     def __del__(self):
         self.finalize()
@@ -105,7 +105,7 @@ class URRobotController(object):
 
     def unset_middle(self):
         self._middle = None
-        
+
     @property
     def robot_available(self):
         """Get robot instance is available or not.
@@ -347,9 +347,9 @@ class URRobotController(object):
             True: Success.
             False: Failed.
         """
-        if self._middle._middle_idl_state == self._middle.MIDDLE_IDL_STATE_PAUSE:
+        if self._pause:
             return False
-        
+
         if self.__robot:
             self._joints_goal = joints
             self.acc = a
@@ -563,7 +563,7 @@ class URRobotController(object):
 
         return True
 
-    def gripper_action(self,value):
+    def gripper_action(self, value):
         """gripper action.
 
         Note:
@@ -579,7 +579,7 @@ class URRobotController(object):
         """
         if value < 0 or value > 255:
             return False
-                
+
         if self.__robot and self.__gripper:
             try:
                 self.__gripper.gripper_action(value)
@@ -599,7 +599,6 @@ class URRobotController(object):
 
         return True
 
-    
     def close_gripper(self):
         """Close gripper.
 
@@ -632,6 +631,51 @@ class URRobotController(object):
 
         return True
 
+    def pause(self):
+        """Pause.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        if self.__robot:
+            self._pause = True
+            self.__robot.stopj(self.acc)
+
+            self._update_send_time()
+            return True
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
+            return False
+
+    def resume(self):
+        """Resume.
+
+        Note:
+            None.
+
+        Args:
+            None.
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        if self.__robot:
+            self._pause = False
+            return True
+        else:
+            logging.error("robot is not initialized in " +
+                          sys._getframe().f_code.co_name)
+            return False
+
     def stopj(self, a=None):
         """Decelerate joint speeds to zero.
 
@@ -648,13 +692,13 @@ class URRobotController(object):
         if self.__robot:
             self.acc = a
             self.__robot.stopj(self.acc)
-            
+
             self._update_send_time()
             return True
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
-            return False    
+            return False
 
     def get_pos(self):
         """get current transform from base to to tcp
@@ -672,16 +716,16 @@ class URRobotController(object):
         pose = []
         if self.__robot:
             pose = self.__robot.get_pos()
-            
             self._update_send_time()
             return True, pose
         else:
             logging.error("robot is not initialized in " +
                           sys._getframe().f_code.co_name)
             return False, pose
-        
+
     def get_joints_goal(self):
         return self._joints_goal
+
 
 if __name__ == '__main__':
     URRobotController()
