@@ -3,6 +3,60 @@ URRobotControllerRTC
 
 This is RT-Component(RTC) for Universal Robot(URx)
 
+Service Port
+------------
+ManipulatorCommonInterfaceIDL
+- ManipulatorCommonInterface
+
+|InterfaceName|Support|
+----|----
+|clearAlarms||
+|getActiveAlarm||
+|getFeedbackPosJoint|○|
+|getManipInfo|○|
+|getSoftLimitJoint|○|
+|getState|○|
+|servoOFF||
+|servoON||
+|setSoftLimitJoint||
+
+- ManipulatorMiddleInterface
+
+|InterfaceName|Support|
+----|----
+|closeGripper|○|
+|getBaseOffset|○|
+|getFeedBackPosCartesian||
+|getMaxSpeedCartesian||
+|getMaxSpeedJoint|○|
+|getMinAccelTimeCartesian||
+|getMinAccelTimeJoint||
+|getSoftLimitCartesian||
+|moveGripper|○|
+|moveLinearCartesianAbs||
+|moveLinearCartesianRel||
+|movePTPJointAbs|○|
+|movePTPJointRel|○|
+|openGripper|○|
+|pause|○|
+|resume|○|
+|stop|○|
+|setAccelTimeJoint||
+|setBaseOffset||
+|setControlPointOffset||
+|setMaxSpeedCartesian||
+|setMaxSpeedJoint||
+|setMinAccelTimeCartesian||
+|setMinAccelTimeJoint||
+|setSoftLimitCartesian||
+|setSpeedCartesian||
+|setSpeedJoint||
+|moveCircularCartesianAbs||
+|moveCircularCartesianRel||
+|setHome|○|
+|getHome|○|
+|goHome|○|
+
 Preparation
 -----------
 ```
