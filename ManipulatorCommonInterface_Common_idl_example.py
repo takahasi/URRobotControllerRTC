@@ -50,7 +50,7 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
     def unset_middle(self):
         self._middle = None
 
-    def _make_returni_id(okng, comment):
+    def _make_return_id(self, okng, comment):
         if okng == "NG":
             ret = DATATYPES_IDL._0_JARA_ARM.NG
         else:
