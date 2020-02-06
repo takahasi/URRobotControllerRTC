@@ -2,12 +2,12 @@
 """Universal Robot (URx) controller RTC.
 """
 
-import sys
+import sys, time
 import logging
 from datetime import datetime
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
-
+import math3d as m3d
 
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
@@ -727,6 +727,70 @@ class URRobotController(object):
     def get_joints_goal(self):
         return self._joints_goal
 
+    def get_pose(self):
+        """ Get current transform matrix from base to TCP
+        Args:
+            None.
+
+        Returns:
+            True: Success.
+            False: Failed.
+        """
+        pose = []
+        if self.__robot:
+            pose = self.__robot.get_pose()
+            self._update_send_time()
+            return True, pose
+        else:
+            logging.error("robot is not initialized in " + 
+                          sys._getframe().f_code.co_name)
+            return False, pose
+
+    def set_pose(self, trans_matrix):
+        """ Move TCP to Point and Orientation defined by Trans_matrix.
+
+        """
+        trans = m3d.Transform(trans_matrix)
+        if self.__robot:
+            pose = self.__robot.set_pose(trans)
+            self._update_send_time()
+            return True
+        else:
+            logging.error("robot is not initialized in " + 
+                          sys._getframe().f_code.co_name)
+            return False
+
+    def add_pose_base(self, trans_matrix, timeout=5.0):
+        """ Move TCP to Point and Orientation defined by Trans_matrix.
+
+        """
+        trans = m3d.Transform(trans_matrix)
+        if self.__robot:
+            pose = self.__robot.add_pose_base(trans, wait=False)
+            self._update_send_time()
+            t1 = time.time()
+            while True:
+                if self.is_moving:
+                    break
+                t2 = time.time()
+                if t2 - t1 > timeout:
+                    logging.error("robot is not moving in " + 
+                                   sys._getframe().f_code.co_name)
+                    return False
+            while True:
+                if not self.is_moving:
+                    break
+                t2 = time.time()
+                if t2 - t1 > timeout:
+                    logging.error("robot is still moving in " + 
+                                   sys._getframe().f_code.co_name)
+                    return False
+
+            return True
+        else:
+            logging.error("robot is not initialized in " + 
+                          sys._getframe().f_code.co_name)
+            return False
 
 if __name__ == '__main__':
     URRobotController()
