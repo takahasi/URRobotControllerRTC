@@ -33,7 +33,8 @@ class URRobotController(object):
     # singleton
     def __new__(cls, ip="192.168.1.101", realtime=True):
         if not cls.__instance:
-            cls.__instance = object.__new__(cls, ip, realtime)
+            # cls.__instance = object.__new__(cls, ip, realtime) Python2 OK, Python3 NG
+            cls.__instance = object.__new__(cls)
         return cls.__instance
 
     def __init__(self, ip="192.168.1.101", realtime=True):
