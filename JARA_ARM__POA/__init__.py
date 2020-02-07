@@ -8,7 +8,6 @@ omniORB.updateModule("JARA_ARM__POA")
 # ** 1. Stub files contributing to this module
 import ManipulatorCommonInterface_Middle_idl
 import ManipulatorCommonInterface_Common_idl
-import ManipulatorCommonInterface_DataTypes_idl
 
 # ** 2. Sub-modules
 
