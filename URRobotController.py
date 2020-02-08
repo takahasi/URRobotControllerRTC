@@ -9,6 +9,8 @@ import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
 import math3d as m3d
 
+from RobotiqGripper import RobotiqGripper
+
 __author__ = "Saburo Takahashi"
 __copyright__ = "Copyright 2017, Saburo Takahashi"
 __license__ = "LGPLv3"
@@ -31,7 +33,7 @@ class URRobotController(object):
     _velocity = 0.6
 
     # singleton
-    def __new__(cls, ip="192.168.1.101", realtime=True):
+    def __new__(cls, ip="192.168.1.101", realtime=True, use_simple_gripper=False):
         if not cls.__instance:
             # cls.__instance = object.__new__(cls, ip, realtime) Python2 OK, Python3 NG
             cls.__instance = object.__new__(cls)
@@ -67,21 +69,16 @@ class URRobotController(object):
             return
 
         try:
-            self.__gripper = Robotiq_Two_Finger_Gripper(self.__robot)
+            if use_simple_gripper:
+                self.__gripper = RobotiqGripper(ip)
+            else:
+                self.__gripper = Robotiq_Two_Finger_Gripper(self.__robot)
         except self.URxException:
             logging.error("URx exception was ooccured in init gripper")
             self.__gripper = None
         except Exception as e:
             logging.error("exception: " + format(str(e)) + " in init gripper")
             self.__gripper = None
-
-        try:
-            self.__simple_gripper = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__simple_gripper.connect((ip, 63352))
-        except Exception as e:
-            logging.error("exception(connecting (" + ip + "): " + format(str(e)) + " in init simple_gripper")
-            self.__simple_gripper = None
-
 
         self._update_send_time()
 
@@ -149,8 +146,6 @@ class URRobotController(object):
             False: NOT available.
         """
         if self.__gripper:
-            return True
-        elif self.__simple_gripper:
             return True
         else:
             return False
@@ -579,10 +574,7 @@ class URRobotController(object):
         """
         if self.__robot and self.__gripper:
             try:
-                self.__simple_gripper.send(b"SET POS 0\n")
-                self.__simple_gripper.send(b"SET GTO 1\n")
-                time.sleep(5.0)
-                self.__simple_gripper.send(b"SET GTO 0\n")
+                self.__gripper.open_gripper()
                 self._update_send_time()
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
@@ -618,10 +610,7 @@ class URRobotController(object):
 
         if self.__robot and self.__gripper:
             try:
-                self.__simple_gripper.send(b"SET POS 255\n")
-                self.__simple_gripper.send(b"SET GTO 1\n")
-                time.sleep(5.0)
-                self.__simple_gripper.send(b"SET GTO 0\n")
+                self.__gripper.gripper_action(value)
                 self._update_send_time()
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
@@ -653,11 +642,7 @@ class URRobotController(object):
         """
         if self.__robot and self.__gripper:
             try:
-                self.__simple_gripper.send(b"SET POS 255\n")
-                # ack = self.__simple_gripper.recv(1024)
-                self.__simple_gripper.send(b"SET GTO 1\n")
-                time.sleep(5.0)
-                self.__simple_gripper.send(b"SET GTO 0\n")
+                self.__gripper.close_gripper()
                 self._update_send_time()
             except self.URxException:
                 logging.error("URx exception was ooccured in " +
