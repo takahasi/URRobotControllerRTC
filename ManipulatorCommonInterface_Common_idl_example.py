@@ -110,13 +110,17 @@ class ManipulatorCommonInterface_Common_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID servoOFF()
     def servoOFF(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        print("servoOFF")
+        return self._make_return_id("OK", '')
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 
     # RETURN_ID servoON()
     def servoON(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        print("ServoON")
+        return self._make_return_id("OK", '')
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 

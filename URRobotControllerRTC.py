@@ -152,10 +152,10 @@ class URRobotControllerRTC(OpenRTM_aist.DataFlowComponentBase):
 
         # Set service provider to Ports
         self._middlePort.registerProvider(
-            "middle", "JARA_ARM::ManipulatorCommonInterface_Middle",
+            "JARA_ARM_ManipulatorCommonInterface_Middle", "JARA_ARM::ManipulatorCommonInterface_Middle",
             self._middle)
         self._commonPort.registerProvider(
-            "common", "JARA_ARM::ManipulatorCommonInterface_Common",
+            "JARA_ARM_ManipulatorCommonInterface_Common", "JARA_ARM::ManipulatorCommonInterface_Common",
             self._common)
 
         # Set service consumers to Ports

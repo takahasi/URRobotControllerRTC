@@ -43,6 +43,9 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
         self._joints_goal = []
 
+        self._carVel = 0.1
+        self._maxCarVel = 0.2
+
     def set_controller(self, controller):
         self._controller = controller
 
@@ -69,7 +72,20 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID getFeedbackPosCartesian(out CarPosWithElbow pos)
     def getFeedbackPosCartesian(self):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        result, pose = self._controller.get_pose()
+        print(pose)
+        print(dir(pose))
+        pos = pose.get_pos()
+        ori = pose.get_orient()
+        carPos = [[ori[0][0], ori[0][1], ori[0][2], pos[0]], 
+                  [ori[1][0], ori[1][1], ori[1][2], pos[1]],
+                  [ori[2][0], ori[2][1], ori[2][2], pos[2]]]
+        pos = COMMON_IDL._0_JARA_ARM.CarPosWithElbow(carPos, 0.0, 0)
+        if result:
+            return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK, ''), pos
+        else:
+            return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG, ''), pos
+        #raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result, pos
 
@@ -116,63 +132,42 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID moveLinearCartesianAbs(in CarPosWithElbow carPoint)
     def moveLinearCartesianAbs(self, carPoint):
-
-        pos_x = carPoint.carPos[0][3]
-        pos_y = carPoint.carPos[1][3]
-        pos_z = carPoint.carPos[2][3]
-
-        theta = math.acos(((carPoint.carPos[0][0] + carPoint.carPos[1][1] + carPoint.carPos[2][2]) - 1) / 2)
-        multi = 1 / (2 * math.sin(theta))
-
-        rad_x = multi * (carPoint.carPos[2][1] - carPoint.carPos[1][2]) * theta
-        rad_y = multi * (carPoint.carPos[0][2] - carPoint.carPos[2][0]) * theta
-        rad_z = multi * (carPoint.carPos[1][0] - carPoint.carPos[0][1]) * theta
-
+        pos = carPoint.carPos
         if self._controller:
-            self._controller.movel([pos_x, pos_y, pos_z, rad_x, rad_y, rad_z])
+            self._controller.set_pose(pos, timeout=40, vel=self._carVel)
             return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK, '')
         else:
             return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG, '')
-
+        
         # RETURN_ID moveLinearCartesianRel(in CarPosWithElbow carPoint)
     def moveLinearCartesianRel(self, carPoint):
-
-        __, current_pose = self._controller.get_pos()
-
-        pos_x = carPoint.carPos[0][3] + current_pose[0]
-        pos_y = carPoint.carPos[1][3] + current_pose[1]
-        pos_z = carPoint.carPos[2][3] + current_pose[2]
-
-        print('pos_x = {}, pos_y = {}, pos_z = {}'.format(pos_x, pos_y, pos_z))
-
-        theta = math.acos(((carPoint.carPos[0][0] + carPoint.carPos[1][1] + carPoint.carPos[2][2]) - 1) / 2)
-        multi = 1 / (2 * math.sin(theta))
-
-        rad_x = multi * (carPoint.carPos[2][1] - carPoint.carPos[1][2]) * theta
-        rad_y = multi * (carPoint.carPos[0][2] - carPoint.carPos[2][0]) * theta
-        rad_z = multi * (carPoint.carPos[1][0] - carPoint.carPos[0][1]) * theta
-
+        pos = carPoint.carPos
         if self._controller:
-            self._controller.movel([pos_x, pos_y, pos_z, rad_x, rad_y, rad_z])
+            self._controller.add_pose_base(pos, timeout=40, vel=self._carVel)
             return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK, '')
         else:
             return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.NG, '')
-
+        
     # RETURN_ID movePTPCartesianAbs(in CarPosWithElbow carPoint)
     def movePTPCartesianAbs(self, carPoint):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        # This is temporal implementation. This is slower to arrive goal.
+        return self.moveLinearCartesianAbs(carPoint)
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 
     # RETURN_ID movePTPCartesianRel(in CarPosWithElbow carPoint)
     def movePTPCartesianRel(self, carPoint):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        # This is temporal implementation. This is slower to arrive goal.
+        return self.moveLinearCartesianRel(carPoint)
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 
     # RETURN_ID movePTPJointAbs(in JointPos jointPoints)
     def movePTPJointAbs(self, jointPoints):
         if self._controller:
+            print("movePTPJointAbs(", jointPoints, ")")
             self._controller.movej(jointPoints)
             return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK, '')
         else:
@@ -284,13 +279,15 @@ class ManipulatorCommonInterface_Middle_i (JARA_ARM__POA.ManipulatorCommonInterf
 
     # RETURN_ID setSpeedCartesian(in ULONG spdRatio)
     def setSpeedCartesian(self, spdRatio):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        self._carVel = spdRatio / 100.0 * self._maxCarVel
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 
     # RETURN_ID setSpeedJoint(in ULONG spdRatio)
     def setSpeedJoint(self, spdRatio):
-        raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
+        return DATATYPES_IDL._0_JARA_ARM.RETURN_ID(DATATYPES_IDL._0_JARA_ARM.OK, '')
+        # raise CORBA.NO_IMPLEMENT(0, CORBA.COMPLETED_NO)
         # *** Implement me
         # Must return: result
 
